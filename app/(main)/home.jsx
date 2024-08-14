@@ -1,5 +1,5 @@
-import { Button, Pressable, StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import { Button, FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
+import React, { useEffect } from 'react'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useAuth } from '../../contexts/AuthContexts';
 import { supabase } from '../../lib/supabase';
@@ -10,12 +10,48 @@ import Plus from '../../assets/icons/Plus';
 import User from '../../assets/icons/User';
 import { useRouter } from 'expo-router';
 import Avatar from '../../components/Avatar';
+import { fetchPosts } from '../../services/postService';
+import PostCard from '../../components/PostCard';
+import Loading from '../../components/Loading';
+import { getUserData } from '../../services/userService';
 
-
+var limit=0;
 const Home = () => {
   const router=useRouter();
     const {setAuth,user}=useAuth();
+    const [posts,setPosts]=React.useState([]);
 
+    const handlePostEvent =async(payload)=>{
+      //console.log('got post event:',payload);
+      if(payload.eventType == 'INSERT' && payload?.new?.id){
+        let newPost={...payload.new}
+        let res=await getUserData(newPost.user_id);
+        newPost.user=res.success ? res.data : {};
+        setPosts(prevPosts=>[newPost,...prevPosts]);
+      } 
+    }
+    useEffect(()=>{
+      let postChannel=supabase.channel('posts').on('postgres_changes',{
+        event :'*',
+        schema:'public',
+        table:'posts'
+      }, handlePostEvent).subscribe();
+      getPosts();
+
+      return ()=>{
+        supabase.removeChannel(postChannel);
+      }
+    },[])
+    const getPosts=async()=>{
+      limit=limit+10;
+      console.log('fetching piosts',limit);
+        let res=await fetchPosts(limit);
+       // console.log('post result',res.data[0].user);
+
+       if(res.success){
+        setPosts(res.data);
+       }
+    }
     
   return (
     <ScreenWrapper bg="white">
@@ -39,7 +75,25 @@ const Home = () => {
             </Pressable>
           </View>
         </View>
-      
+
+        <FlatList
+          data={posts}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listStyle}
+          keyExtractor={item=>item.id.toString()}
+          renderItem={(item)=><PostCard
+              item={item}
+              currentUser={user}
+              router={router}
+            />}
+
+            ListFooterComponent={
+              <View style={{marginVertical:posts.length==0 ?200 :30}}>
+
+                <Loading/>
+              </View>
+            }
+        />
       </View>
  
     </ScreenWrapper>
