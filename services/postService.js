@@ -34,7 +34,7 @@ export const fetchPosts=async(limit=10)=>{
     try {
         //upload image
 
-        const {data,error}=await supabase.from('posts').select('*, user:users (id,name,image)').order('created_at',{ascending:false}).limit(limit);
+        const {data,error}=await supabase.from('posts').select('*, user:users (id,name,image),postLikes(*)').order('created_at',{ascending:false}).limit(limit);
 
         if(error){
             console.log("fetch Post error",error);
@@ -47,3 +47,68 @@ export const fetchPosts=async(limit=10)=>{
         return {success:false,msg:"could not fetch the post"}
     }
 }
+
+
+export const createPostLike=async(postLike)=>{
+    try {
+        //upload image  
+        const {data,error}=await supabase.from('postLikes').insert(postLike).select().single();
+
+
+
+        if(error){
+            console.log(" post  like error",error);
+        return {success:false,msg:"could not like the post"}
+        }
+
+        return {success:true,data:data};
+
+    } catch (error) {
+        console.log(" post  like error",error);
+        return {success:false,msg:"could not like the post"}
+    }
+}
+
+
+
+export const removePostLike=async(postId,userId)=>{
+    try {
+        //upload image  
+        const {error}=await supabase.from('postLikes').delete().eq('userId',userId).eq('postId',postId);
+        
+
+
+        if(error){
+            console.log(" post  like error",error);
+        return {success:false,msg:"could not like the post"}
+        }
+
+        return {success:true};
+
+    } catch (error) {
+        console.log(" post  like error",error);
+        return {success:false,msg:"could not like the post"}
+    }
+}
+
+
+//fetch post details 
+
+export const fetchPostDetails=async(postId)=>{
+    try {
+        //upload image
+
+        const {data,error}=await supabase.from('posts').select('*, user:users (id,name,image),postLikes(*)').eq('id',postId).single();
+
+        if(error){
+            console.log("fetch Post error",error);
+            return {success:false,msg:"could not fetch the post"}
+        }
+
+        return {success:true,data:data};
+    } catch (error) {
+        console.log("fetch post error",error);
+        return {success:false,msg:"could not fetch the post"}
+    }
+}
+

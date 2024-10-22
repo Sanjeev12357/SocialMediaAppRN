@@ -20,6 +20,7 @@ const Home = () => {
   const router=useRouter();
     const {setAuth,user}=useAuth();
     const [posts,setPosts]=React.useState([]);
+    const [hasMore,sethasMore]=React.useState(true);
 
     const handlePostEvent =async(payload)=>{
       //console.log('got post event:',payload);
@@ -36,19 +37,24 @@ const Home = () => {
         schema:'public',
         table:'posts'
       }, handlePostEvent).subscribe();
-      getPosts();
+    //  getPosts();
 
       return ()=>{
         supabase.removeChannel(postChannel);
       }
     },[])
     const getPosts=async()=>{
-      limit=limit+10;
+      if(!hasMore) return;
+      limit=limit+4;
       console.log('fetching piosts',limit);
         let res=await fetchPosts(limit);
        // console.log('post result',res.data[0].user);
 
        if(res.success){
+        if(posts.length==res.data.length){
+          sethasMore(false);
+        }
+        console.log('posts',res.data);
         setPosts(res.data);
        }
     }
@@ -86,12 +92,18 @@ const Home = () => {
               currentUser={user}
               router={router}
             />}
-
-            ListFooterComponent={
+            onEndReached={()=>{
+              getPosts();
+              console.log('end reached');
+            }}
+            onEndReachedThreshold={0}
+            ListFooterComponent={hasMore?(
               <View style={{marginVertical:posts.length==0 ?200 :30}}>
 
                 <Loading/>
-              </View>
+              </View>):(
+                <Text style={styles.noPosts}>No more posts to show</Text>
+              )
             }
         />
       </View>
