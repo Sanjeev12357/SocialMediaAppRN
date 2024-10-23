@@ -13,9 +13,10 @@ export const getUserImageSrc=imagePath=>{
 
 export const getSupabaseFileUrl=filePath=>{
     if(filePath){
-        return{uri: `${supabaseUrl}/storage/v1/object/public/uploads/${filePath}`};
+        return `${supabaseUrl}/storage/v1/object/public/uploads/${filePath}`;
     }
     return null;
+   
 }
 
 export const uploadFile=async(folderName,fileUri,isImage=true)=>{
@@ -57,7 +58,8 @@ export const downloadFile = async (url) => {
     try {
 
        // console.log('url',url);
-        const { uri } = await FileSystem.downloadAsync(url, getLocalFilePath(url));
+        const  {uri}  = await FileSystem.downloadAsync(url, getLocalFilePath(url));
+        console.log('uri',uri);
         return uri;  // Return just the URI string
     } catch (error) {
         console.error('Download failed', error);

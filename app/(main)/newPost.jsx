@@ -44,7 +44,7 @@ const NewPost = () => {
     }
     let result=await ImagePicker.launchImageLibraryAsync(mediaConfig)
     //console.log('result',result.assets[0]);
-    if(!result.cancelled){
+    if(!result.canceled){
       setFile(result.assets[0])
     }
 
@@ -76,33 +76,40 @@ const NewPost = () => {
     }
     return getSupabaseFileUrl(file)?.uri;
   }
-  const onSubmit=async()=>{
-   
-    if(!bodyRef.current && !file){
-      Alert.alert("Create Post","Please add some content or media to post");
-      return;
+  const onSubmit = async () => {
+    try {
+      if(!bodyRef.current?.trim() && !file){
+        Alert.alert("Create Post","Please add some content or media to post");
+        return;
+      }
+  
+      setLoading(true);
+      const data = {
+        file,
+        body: bodyRef.current,
+        userId: user?.id
+      }
+      
+      const res = await createOrUpdatePost(data);
+      
+      if(res.success){
+        setFile(null);
+        bodyRef.current = '';
+        editorRef.current?.setContentHTML('');
+        router.back();
+      } else {
+        Alert.alert("Post", res.msg || "Failed to create post");
+      }
+    } catch (error) {
+      Alert.alert("Error", "An unexpected error occurred while creating the post");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-
-    let data={
-      file,
-      body:bodyRef.current,
-      userId:user?.id
-    }
-//console.log("data",data);
-    setLoading(true);
-    let res=await createOrUpdatePost(data);
-    setLoading(false);
-    //console.log("post res",res);
-
-    // create post
-    if(res.success){
-      setFile(null);
-      bodyRef.current='';
-      editorRef.current?.setContentHTML('');
-      router.back();
-    }else{
-      Alert.alert("Post",res.msg);
-    }
+  }
+  if (!user?.id) {
+    Alert.alert("Error", "User not authenticated");
+    return;
   }
   return (
     <ScreenWrapper bg='white'>

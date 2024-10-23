@@ -34,7 +34,7 @@ export const fetchPosts=async(limit=10)=>{
     try {
         //upload image
 
-        const {data,error}=await supabase.from('posts').select('*, user:users (id,name,image),postLikes(*)').order('created_at',{ascending:false}).limit(limit);
+        const {data,error}=await supabase.from('posts').select(`*, user:users (id,name,image),postLikes(*) ,comments(count)`).order('created_at',{ascending:false}).limit(limit);
 
         if(error){
             console.log("fetch Post error",error);
@@ -98,7 +98,7 @@ export const fetchPostDetails=async(postId)=>{
     try {
         //upload image
 
-        const {data,error}=await supabase.from('posts').select('*, user:users (id,name,image),postLikes(*)').eq('id',postId).single();
+        const {data,error}=await supabase.from('posts').select('*, user:users (id,name,image),postLikes(*),comments(*,user:users(id,name,image))').eq('id',postId).order("created_at",{ascending:false,foreignTable:'comments'}).single();
 
         if(error){
             console.log("fetch Post error",error);
@@ -112,3 +112,45 @@ export const fetchPostDetails=async(postId)=>{
     }
 }
 
+
+export const createComment=async(comment)=>{
+    try {
+        //upload image  
+        const {data,error}=await supabase.from('comments').insert(comment).select().single();
+
+
+
+        if(error){
+            console.log(" comment  like error",error);
+        return {success:false,msg:"could not create comment"}
+        }
+
+        return {success:true,data:data};
+
+    } catch (error) {
+        console.log(" comment  like error",error);
+        return {success:false,msg:"could not like the comment"}
+    }
+}
+
+
+
+export const removeComment=async(commentId)=>{
+    try {
+        //upload image  
+        const {error}=await supabase.from('comments').delete().eq('id',commentId);
+        
+
+
+        if(error){
+            console.log(" post  like error",error);
+        return {success:false,msg:"could not remove  the comment"}
+        }
+
+        return {success:true,data:{commentId}};
+
+    } catch (error) {
+        console.log(" post  like error",error);
+        return {success:false,msg:"could not remove  the comment"}
+    }
+}
